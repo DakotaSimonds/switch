@@ -101,9 +101,15 @@ void print_voidstar_int(void *i)
 
 
 
+
+
+
+
+
+
 typedef struct hash_tbl
 {
-	list *tbl;
+	list **tbl;
 	size_t size;
 } hash_tbl;
 
@@ -112,7 +118,7 @@ void init_hash_tbl(hash_tbl *tbl, size_t size)
 	tbl->tbl = malloc(sizeof(list*)*size);
 	tbl->size = size;
 	for(int i = 0; i < size; i++){
-		((list**)(tbl->tbl))[i] = 0;
+		tbl->tbl[i] = 0;
 	}
 }
 
@@ -134,6 +140,7 @@ hash_tbl* realloc_hash_tbl(hash_tbl *tbl, size_t min)
 		tbl->size *= 2;	
 	}
 	realloc(tbl->tbl, sizeof(list*) * tbl->size);
+	tbl->size = min;
 	return tbl;
 }
 
@@ -146,13 +153,13 @@ void insert_hash_tbl(hash_tbl *tbl, char *key, void *datum)
 		realloc_hash_tbl(tbl, khash);
 	}
 	
-	if(((list**)(tbl->tbl))[khash] == 0){
+	if(tbl->tbl[khash] == 0){
 		list *chain = (list*)malloc(sizeof(list));
-		((list**)(tbl->tbl))[khash] = chain;
+		tbl->tbl[khash] = chain;
 		list_init(chain);
 	}
 	
-	list_insert(((list**)(tbl->tbl))[khash],key, datum);
+	list_insert(tbl->tbl[khash],key, datum);
 }
 
 void * search_hash_tbl(hash_tbl *tbl, char *key)
@@ -160,7 +167,7 @@ void * search_hash_tbl(hash_tbl *tbl, char *key)
 	int khash = hash(key);
 	if(khash >= tbl->size) return 0;
 	
-	list *chain = ((list**)tbl->tbl)[khash];
+	list *chain = tbl->tbl[khash];
 	list_node *cur = chain->head; 
 	for(;cur != 0; cur = cur->next){
 		if(strcmp(cur->key, key) == 0){
@@ -205,9 +212,10 @@ int main(int argc, char **argv)
 	scan_for_functions(scriptFile);
 	fclose(scriptFile);
 	hash_tbl t;
-	init_hash_tbl(&t, 100);
+	init_hash_tbl(&t, 100000);
 	insert_hash_tbl(&t, "key", &t);
-    void *got = search_hash_tbl(&t, "key");
+    void *got = search_hash_tbl(&t, "keyh");
 	if(got == &t) puts("found");
+	puts("didn't crash");
 	return 0;
 }
